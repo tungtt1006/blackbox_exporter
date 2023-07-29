@@ -1,0 +1,59 @@
+# my global config
+global:
+  scrape_interval: 15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - alertmanager:9093
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+scrape_configs:
+  - job_name: blackbox_exporter_http_2xx
+    metrics_path: /probe
+    params:
+      module: [ http_2xx ]  # Look for a HTTP 200 response.
+    dns_sd_configs:
+      - names:
+          - nginx
+        type: A
+        port: 80
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+        replacement: http://$1/test  # Make probe URL be like https://1.2.3.4:443/
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+      - source_labels: [__meta_dns_name]
+        target_label: __param_hostname  # Make domain name become 'Host' header for probe requests
+      - source_labels: [__meta_dns_name]
+        target_label: vhost  # and store it in 'vhost' label
+  - job_name: blackbox_exporter_dns_tcp_example
+    metrics_path: /probe
+    params:
+      module: [ dns_tcp_example ]  # Look for a HTTP 200 response.
+    static_configs:
+      - targets:
+          - "127.0.0.11"
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+        replacement: ${1}  # Make probe URL be like https://1.2.3.4:443/
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+      - source_labels: [__meta_dns_name]
+        target_label: __param_hostname  # Make domain name become 'Host' header for probe requests
+      - source_labels: [__meta_dns_name]
+        target_label: vhost  # and store it in 'vhost' label
