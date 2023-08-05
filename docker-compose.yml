@@ -3,15 +3,10 @@ version: '3.8'
 services:
   nginx:
     image: nginx
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
       - 80:80
-
-  blackbox_exporter:
-    image: quay.io/prometheus/blackbox-exporter
-    volumes:
-      - ./blackbox.yml:/etc/blackbox_exporter/config.yml
-    ports:
-      - 9115:9115
 
   prometheus:
     image: prom/prometheus
@@ -19,3 +14,10 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
     ports:
       - 9090:9090
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:0.10.0
+    command:
+      - "-nginx.scrape-uri=http://nginx/stub_status"
+    ports:
+      - 9113:9113
